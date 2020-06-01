@@ -1,0 +1,27 @@
+<header>
+	<h1>{{title}}</h1>
+
+    	<a href="/">Home</a>
+	<a href="/users">Create an Account</a>
+    	<a href="/users/login">Edit My Profile</a>
+	<a href="/users/me">My Player Card</a>
+    	<a href="/help">Help</a>
+	<div>
+		
+	{{#if loggedIn }}
+			<p class="response-2">Welcome! Persons Name | <a href="/users/logoutAll">Logout</a> </p>
+		
+	{{else }}
+		
+		Login:
+		<form name="loginForm" method="POST" id="loginForm" action="/users/login/">
+			<input placeholder="Email" name="email" class="field" />
+			<input placeholder="Type in a password" name="password" class="field" />
+			<button type="submit" class="submitBtn">Submit</button>
+		</form>
+		<p class="response-1"></p>
+	{{/if}}
+		
+	--------------------------------------------------------------	 	
+	</div>
+</header>

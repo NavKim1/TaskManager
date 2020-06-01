@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+	<title>Profile</title>
+    	<!--link rel="icon" href="/img/weather.png">
+    	<link rel="stylesheet" href="/css/styles.css" -->
+	<style type="text/css">
+		.l-half{
+			display : inline-block;
+			overflow: hidden;
+			width: 40%;
+			vertical-align:top;
+		}
+	</style>	
+    <script src="https://code.jquery.com/jquery-3.5.0.min.js" integrity="sha256-xNzN2a4ltkB44Mc/Jz3pT4iU1cmeR0FkXs4pru/JxaQ=" crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <div class="main-content">
+       {{>header}}
+	<div class="l-half">
+		<form>
+        		<p>Player Name: <input type="text"/></p>
+			<p>Player Position: 
+			<select><option>Select One</option>
+				<option>Goalkeeper</option>
+				<option>Right Fullback</option>
+ 				<option>Left Fullback</option>
+				<option>Center Back</option>
+				<option>Center Back</option>
+				<option>Holding Midfielder</option>
+				<option>Right Midfielder/Winger</option>
+				<option>Central/Box-to-Box Midfielder</option>
+				<option>Striker</option>
+				<option>Attacking Midfielder/Playmaker</option>
+				<option>Left Midfielder/Wingers</option>
+			</select>
+			</p>
+			</form>
+			<p>Club: <input type="text"/></p>
+			<p>Upload club logo: <button>Upload Image</button></p>
+			<p>Upload player photo:
+			<form enctype="multipart/form-data" action="/users/me/avatar" method="POST"> 
+   				<input type="file" name="avatar" />
+   				<button type="submit">Upload a file</button>
+			</form>
+			<form>
+				<p>Player Attributes:
+					<ul>
+					<li class="physical">Dominant Foot:<select><option>Select One</option><option>Left</option><option>Right</option></select></li>
+					<li>Physical: <select><option>Select One</option><option>Strength</option><option>Speed</option><option>Endurance</option></select></li>
+					<li class="footSkill">Foot Skill:<select><option>Select One</option><option>Launcher</option><option>Sniper</option><option>Control</option></select></li>
+					<li class="playStyle">Play Style:<select><option>Select One</option><option>Air Supreme</option><option>Ball Hawk</option>Scorer<option>Play Maker</option><option>Shut Down</option> <option>Gladiator</option><option>Protector</option></select></li>
+			
+					</ul>
+				</p>
+				<button>Preview</button><button>Save</button>
+			</form>
+		</div>
+		<div class="l-half">
+			{{#if imgStr}}
+				<img src="{{imgStr}}" /> 
+			{{/if}}
+		</div>
+	<!-- form name="logoutForm" action="http://localhost:3000/users/logout" method="post" id="logout">
+		
+		<button class="submitBtn">Submit</button>
+	</form -->
+	<p class="response-1"></p>
+	<p class="response-2"></p>	
+    </div>
+
+    {{>footer}}
+    
+</body>
+
+</html>

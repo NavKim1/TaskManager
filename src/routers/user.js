@@ -3,40 +3,135 @@ const auth = require('../middleware/auth')
 const router = new express.Router()
 const User = require('../models/user')
 const multer = require('multer')
+const bodyParser = require('body-parser')
+const morgan = require('morgan')
+const fs = require('fs')
+const path = require('path')
+const {sendWelcomeEmail, sendCancelEmail} = require('../emails/account')
+
+const cookieParser = require('cookie-parser')
+
+router.use(cookieParser())
+
+
+router.use(morgan('dev'))
+
+router.use(morgan('common', {
+  stream: fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' })
+}))
+
+// parse application/x-www-form-urlencoded
+router.use(bodyParser.urlencoded({ extended: false }))
+ 
+// parse application/json
+router.use(bodyParser.json())
+
+morgan(':method :url :status :res[content-length] - :response-time ms')
+
+// homepage
+router.get('/', (req, res) => {
+
+    res.render('home', {
+        title: 'Homepage',
+        name: 'Andrew Mead'
+	
+    })
+    
+})
 
 
 
-// user creation
+// get login 
+router.get('/users/login', (req, res) => {
+
+    res.render('login', {
+        title: 'Edit Profile',
+        name: 'Andrew Mead'
+	
+    })
+    
+})
+
+// User login endPoint
+router.post('/users/login', async (req,res) => {
+	//res.setHeader('Content-Type', 'text/plain')
+
+	try{
+		const user = await User.findByCredentials(req.body.email, req.body.password)
+		const token = await user.generateAuthToken()
+		res.cookie('tokenKey',token)
+		
+		if(user){
+			res.redirect('/users/me')		
+		}		
+			
+	}catch(e){
+		res.status(400).send('Your username and password did not match')
+	}
+	
+})
+
+// Create an Account
+router.get('/users', (req, res) => {
+	
+	res.render('createAccount', {
+        	title: 'Create an account',
+		newAccount: true,
+		loggedIn: false
+	
+    	})
+})
+
+
+
+// User creation endpoint
 router.post('/users', async (req, res) => {
 	
 	const user = new User(req.body)
 	
 	try{
 		await user.save()
+		sendWelcomeEmail(user.email, user.name)
 		const token = await user.generateAuthToken()
-		res.status(201).send({user, token})
+		// res.status(201).send({user, token})
+		res.redirect('/users/me')
 	}catch(e){
-		res.status(400).send(e)
-	}
-
-})
-
-// user login
-router.post('/users/login', async(req,res) => {
-	console.log('cred: '+req.body.email, req.body.password)	
+		console.log('error ',e)
 		
-	try{
-		const user = await User.findByCredentials(req.body.email, req.body.password)
-		const token = await user.generateAuthToken()		
-		res.send({user,token})	
-	}catch(e){
-		res.status(400).send('Your username and password did not match')
+		//let errorObj = JSON.parse(e.errors) // already an object
+		//let errorObj = JSON.stringify(e.errors) // creates as string
+		
+		let errorObj = e.errors // already an object [object Object]
+		let msg = ''
+		
+		for( let prop in errorObj ){
+    			msg += errorObj[prop].message 
+		}
+		
+		let displayMsg = msg.replace(/Path/g, "").replace(/`/g, "")
+		
+		res.render('createAccount', {
+        	title: 'Create an account - need to correct ',
+		newAccount: true,
+		loggedIn: false,
+		errors: displayMsg
+		})	
+
+
 	}
+
 })
 
-// getting user profile
-router.get('/users/me', auth , async (req,res) => {
-	res.send(req.user)
+
+// Get user player profile
+router.get('/users/me', auth, async (req,res) => {
+	
+	await res.render('profile', {
+        	title: 'My Profile',
+        	loggedIn: true
+	
+    	})
+	
 	
 })
 
@@ -75,6 +170,7 @@ router.delete('/users/me', auth, async (req,res) => {
 		//}
 		
 		await req.user.remove()
+		sendCancelEmail(req.user.email, req.user.name)
 		res.send(req.user)
 
 	}catch(e){
@@ -83,14 +179,28 @@ router.delete('/users/me', auth, async (req,res) => {
 
 })
 
+// get logout user
+router.get('/users/logoutAll', (req, res) => {
+  	res.clearCookie("tokenKey");	 	
+    	res.render('login', {
+        	title: 'Logged Out',
+        	name: 'Andrew Mead'
+	
+    	})
+    
+})
+
+
+
+
 // logout user
 router.post('/users/logout', auth, async (req,res) => {
 	try{
+		res.clearCookie("tokenKey");		
 		req.user.tokens = req.user.tokens.filter((token) => {
 			return token.token !== req.token //looking for tokens not used, filters out token used
 		})
 		await req.user.save()
-		
 		res.send()
 	}
 	catch(e){	
@@ -101,6 +211,7 @@ router.post('/users/logout', auth, async (req,res) => {
 // logout all users
 router.post('/users/logoutAll', auth, async (req,res) => {
 	try{
+		res.clearCookie("tokenKey");		
 		req.user.tokens = []
 		await req.user.save()
 		res.send()
@@ -115,7 +226,7 @@ router.post('/users/logoutAll', auth, async (req,res) => {
 const upload = multer({
 	// dest:'avatars',
 	limits: {
-		fileSize:1000000
+		fileSize:9000000
 	},
 	fileFilter(req, file, cb) {
 		if(!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
@@ -133,10 +244,16 @@ const upload = multer({
 })
 
 // creating and updating the avatar
-router.post('/users/me/avatar', auth, upload.single('avatar'), async (req,res) => {
+router.post('/users/me/avatar/', auth, upload.single('avatar'), async (req,res) => {
 	req.user.avatar = req.file.buffer
-	await req.user.save()	
-	res.send()
+	await req.user.save()
+	
+	let imgPath = '/users/'+ req.user._id +'/avatar/'
+	
+	res.render('profile', {
+		imgStr : imgPath			
+	})	
+	
 },(error, req, res, next) => {
 	res.status(400).send({error:error.message}) // for any uncaught error
 })
@@ -160,7 +277,7 @@ router.get('/users/:id/avatar', auth, async (req,res) => {
 		
 		res.set('Content-Type','image/jpg')
 		res.send(user.avatar)
-		console.log('user.avatar')
+		//console.log('user.avatar')
 	}
 	catch(e){
 		res.status(400).send()

@@ -3,13 +3,20 @@ const validator = require('validator')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const Task = require('./task')
+//const cookieParser = require('cookie-parser')
+
 
 const userSchema = new mongoose.Schema({
-	name: {
+	firstName: {
 		type: String,
 		required: true,
 		trim:true
 	},
+	lastName: {
+		type: String,
+		required: true,
+		trim:true
+	},	
 	email:{
 		type:String,
 		unique:true,
@@ -71,8 +78,8 @@ userSchema.methods.toJSON = function(){
 	const user = this
 	const userObject = user.toObject()
 	
-	delete userObject.password
-	delete userObject.tokens
+	//delete userObject.password
+	//delete userObject.tokens
 	delete userObject.avatar	
 
 	return userObject
@@ -82,7 +89,7 @@ userSchema.methods.toJSON = function(){
 userSchema.methods.generateAuthToken = async function() {
 	
 	const user = this
-	const token = jwt.sign({_id: user._id.toString()}, 'thisismynewcourse')
+	const token = jwt.sign({_id: user._id.toString()}, process.env.JWT_SECRET, {expiresIn:'7 days'})
 	// console.log("_id in token is: "+user._id.toString())
 	user.tokens = user.tokens.concat({token})	
 	await user.save()
