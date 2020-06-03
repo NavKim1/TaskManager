@@ -2,14 +2,16 @@
 	<h1>{{title}}</h1>
 
     	<a href="/">Home</a>
+	{{#unless loggedIn }}
 	<a href="/users">Create an Account</a>
-    	<a href="/users/login">Edit My Profile</a>
-	<a href="/users/me">My Player Card</a>
+	{{/unless}}    	
+	<a href="/users/me">My Profile</a>
+	<a href="/users/{{uid}}/avatar">My Player Card</a>
     	<a href="/help">Help</a>
 	<div>
 		
 	{{#if loggedIn }}
-			<p class="response-2">Welcome! Persons Name | <a href="/users/logoutAll">Logout</a> </p>
+			<p class="response-2">Welcome! {{firstName}} | <a href="/users/logoutAll">Logout</a> </p>
 		
 	{{else }}
 		

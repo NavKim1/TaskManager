@@ -23,6 +23,7 @@ const auth = async(req,res,next) => {
 	}	
 	req.token = token
 	req.user = user	
+	req.cookies = token
 	next()
 	}catch(e){
 		console.log("ERROR FOUND AUTH "+e)

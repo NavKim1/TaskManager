@@ -93,8 +93,14 @@ router.post('/users', async (req, res) => {
 		await user.save()
 		sendWelcomeEmail(user.email, user.name)
 		const token = await user.generateAuthToken()
-		// res.status(201).send({user, token})
-		res.redirect('/users/me')
+		//console.log("TOKEN CREATION CALLED ", token)
+		//res.status(201).send({user, token}).
+		res.render('profile', {
+			token : token		
+		})
+
+		
+			
 	}catch(e){
 		console.log('error ',e)
 		
@@ -128,8 +134,9 @@ router.get('/users/me', auth, async (req,res) => {
 	
 	await res.render('profile', {
         	title: 'My Profile',
-        	loggedIn: true
-	
+        	loggedIn: true,
+		uid: req.user._id,
+		firstName: req.user.firstName
     	})
 	
 	
@@ -249,9 +256,12 @@ router.post('/users/me/avatar/', auth, upload.single('avatar'), async (req,res) 
 	await req.user.save()
 	
 	let imgPath = '/users/'+ req.user._id +'/avatar/'
-	
+
+	console.log('TOKEN IN USERS/ME/AVATAR ', req.user.token)	
+		
 	res.render('profile', {
-		imgStr : imgPath			
+	      	imgStr : imgPath,
+		loggedIn: true
 	})	
 	
 },(error, req, res, next) => {

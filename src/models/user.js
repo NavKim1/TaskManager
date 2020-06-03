@@ -90,7 +90,7 @@ userSchema.methods.generateAuthToken = async function() {
 	
 	const user = this
 	const token = jwt.sign({_id: user._id.toString()}, process.env.JWT_SECRET, {expiresIn:'7 days'})
-	// console.log("_id in token is: "+user._id.toString())
+	console.log("_id in token is: "+user._id.toString())
 	user.tokens = user.tokens.concat({token})	
 	await user.save()
 
